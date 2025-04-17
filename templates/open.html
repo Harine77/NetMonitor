@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome | Network Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background: #f5f7fa;
+            background-image: url("{{ url_for('static', filename='images/network-bg.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 30, 48, 0.75);
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 50px 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            border-top: 5px solid #0056b3;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #0d2240;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.15rem;
+            color: #4a5568;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .dashboard-info {
+            text-align: left;
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #0056b3;
+        }
+
+        .dashboard-info h2 {
+            font-size: 1.8rem;
+            color: #0056b3;
+            font-weight: 500;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .dashboard-info h2::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 60px;
+            height: 3px;
+            background-color: #0056b3;
+        }
+
+        .dashboard-info ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .dashboard-info li {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            padding: 15px;
+            position: relative;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .dashboard-info li:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-info li::before {
+            content: "✓";
+            margin-right: 12px;
+            color: #0056b3;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .redirect-button-container {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .redirect-button-container p {
+            font-size: 1.05rem;
+            color: #4a5568;
+            margin-bottom: 18px;
+            font-weight: 500;
+        }
+
+        .redirect-button {
+            padding: 16px 32px;
+            background-color: #0056b3;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            max-width: 320px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
+        }
+
+        .redirect-button:hover {
+            background-color: #004292;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 86, 179, 0.3);
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            height: 60px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard-info {
+                padding: 20px;
+            }
+
+            .dashboard-info h2 {
+                font-size: 1.6rem;
+            }
+
+            .dashboard-info ul {
+                grid-template-columns: 1fr;
+            }
+
+            .redirect-button {
+                font-size: 1rem;
+                padding: 14px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Network Dashboard Logo">
+        </div>
+        <div class="header">
+            <h1>Welcome to the Network Dashboard</h1>
+            <p>Advanced monitoring and management solution for your enterprise network infrastructure.</p>
+        </div>
+
+        <div class="dashboard-info">
+            <h2>Key Features</h2>
+            <ul>
+                <li>Real-time Network Visualization</li>
+                <li>Active Device Monitoring</li>
+                <li>Bandwidth and Traffic Insights</li>
+                <li>Security Alerts and Logs</li>
+                <li>Performance Analytics</li>
+                <li>Customizable Reporting</li>
+            </ul>
+        </div>
+
+        <div class="redirect-button-container">
+            <p>Access your secure network management portal below:</p>
+            <a href="{{ url_for('home') }}">
+                <button class="redirect-button">Go to Dashboard</button>
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 Network Dashboard. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

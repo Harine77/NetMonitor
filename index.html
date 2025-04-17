@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Bandwidth Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-primary);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        header h1 {
+            margin: 0;
+            padding: 0 20px;
+            font-size: 24px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        
+        .dashboard-full {
+            grid-column: 1 / -1;
+        }
+        
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-start {
+            background-color: var(--success-color);
+        }
+        
+        .btn-start:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-train {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-train:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-predict {
+            background-color: var(--accent-color);
+        }
+        
+        .btn-predict:hover {
+            background-color: #c0392b;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+        
+        .alloc-chart-container {
+            height: 280px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .alloc-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .stat-block {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+        }
+        
+        .stat-text {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        #packet-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            font-weight: 500;
+        }
+        
+        tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        #prediction-result {
+            padding: 15px;
+            border-left: 4px solid var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .error {
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-live {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 960px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .alloc-chart-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+        .title-container {
+            text-align: center;
+            padding: 40px 20px 20px;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            font-style: italic;
+            color: #e0e0e0;
+        }
+
+        /* Notification toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .toast.success {
+            background-color: var(--success-color);
+        }
+        
+        .toast.warning {
+            background-color: var(--warning-color);
+        }
+        
+        .toast.error {
+            background-color: var(--danger-color);
+        }
+        
+        .toast.info {
+            background-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <h1 class="main-title">Smart Bandwidth Management & Traffic Prediction System</h1>
+        <p class="subtitle">Real-time Packet Monitoring | LSTM-Based Prediction | Dynamic Rerouting</p>
+    </div>
+    
+    <!-- inside index.html -->
+    
+    <div class="container">
+        <div class="control-panel">
+            <button onclick="startSniffing()" class="btn-start">
+                ▶️ Start Monitoring
+            </button>
+            <button onclick="trainModel()" class="btn-train">
+                🧠 Train Model
+            </button>
+            <button onclick="predictTraffic()" class="btn-predict">
+                📊 Predict Traffic
+            </button>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="status-indicator status-live"></span> Live Traffic Volume
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Bandwidth Allocation</div>
+                <div class="card-body">
+                    <div class="alloc-chart-container">
+                        <div class="chart-container" style="height: 200px; width: 200px; margin: 0 auto;">
+                            <canvas id="allocationChart"></canvas>
+                        </div>
+                        <div class="alloc-info">
+                            <div class="stat-block">
+                                <div class="stat-icon" style="background-color: #36a2eb;">
+                                    <span>%</span>
+                                </div>
+                                <div>
+                                    <div class="stat-text" id="available-bandwidth">100%</div>
+                                    <div class="stat-label">Available Bandwidth</div>
+                                </div>
+                            </div>
+                            <div class="stat-block">
+                                <div class="stat-icon" style="background-color: #ff6384;">
+                                    <span>%</span>
+                                </div>
+                                <div>
+                                    <div class="stat-text" id="allocated-bandwidth">0%</div>
+                                    <div class="stat-label">Allocated Bandwidth</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card dashboard-full">
+                <div class="card-header">Bandwidth Allocation & Rerouting</div>
+                <div class="card-body">
+                    <div id="prediction-result">No prediction made yet. Click "Predict Traffic" to analyze current network conditions.</div>
+                </div>
+            </div>
+
+            <div class="card dashboard-full">
+                <div class="card-header">Captured Packet Data</div>
+                <div class="card-body" style="padding: 0;">
+                    <div id="packet-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Source IP</th>
+                                    <th>Destination IP</th>
+                                    <th>Protocol</th>
+                                    <th>Length</th>
+                                </tr>
+                            </thead>
+                            <tbody id="packet-data">
+                                <tr><td colspan="5">Waiting for packets...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Initialize charts with improved styling
+        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+        const trafficChart = new Chart(trafficCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Packet Size (bytes)',
+                    data: [],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3498db',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Packet Size (bytes)'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        const allocCtx = document.getElementById('allocationChart').getContext('2d');
+        const allocChart = new Chart(allocCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Allocated'],
+                datasets: [{
+                    data: [100, 0],
+                    backgroundColor: ['#36a2eb', '#ff6384'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        let lastPacketTimestamp = 0;
+        const maxPackets = 50;
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            // Add the appropriate class based on type
+            if (type === 'success') toast.classList.add('success');
+            else if (type === 'warning') toast.classList.add('warning');
+            else if (type === 'error') toast.classList.add('error');
+            else toast.classList.add('info');
+            
+            // Show the toast
+            toast.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function startSniffing() {
+            fetch('/start_sniffing')
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.status || "Monitoring started successfully.", "success");
+                    lastPacketTimestamp = 0;
+                    document.getElementById("packet-data").innerHTML = "<tr><td colspan='5'>Waiting for packets...</td></tr>";
+                    // Reset charts
+                    trafficChart.data.labels = [];
+                    trafficChart.data.datasets[0].data = [];
+                    trafficChart.update();
+                })
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                    showToast("Error starting monitoring.", "error");
+                });
+        }
+
+        function fetchPackets() {
+            fetch('/get_packets')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let tableBody = document.getElementById("packet-data");
+                    tableBody.innerHTML = "";
+
+                    if (!data.packets || data.packets.length === 0) {
+                        tableBody.innerHTML = "<tr><td colspan='5'>No packets captured yet.</td></tr>";
+                        return;
+                    }
+
+                    // Update traffic chart
+                    const newPackets = data.packets.slice(-20); // Show last 20 packets in chart
+                    trafficChart.data.labels = newPackets.map(p => new Date(p[0] * 1000).toLocaleTimeString());
+                    trafficChart.data.datasets[0].data = newPackets.map(p => p[4]);
+                    trafficChart.update();
+
+                    // Update packet table (show last 50 packets)
+                    const displayPackets = data.packets.slice(-maxPackets);
+                    displayPackets.forEach(packet => {
+                        let formattedTimestamp = new Date(packet[0] * 1000).toLocaleTimeString();
+                        let row = `<tr>
+                            <td>${formattedTimestamp}</td>
+                            <td>${packet[1] || "N/A"}</td>
+                            <td>${packet[2] || "N/A"}</td>
+                            <td>${packet[3] || "N/A"}</td>
+                            <td>${packet[4] || "N/A"}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching packets:', error);
+                    showToast("Error fetching packet data", "error");
+                });
+        }
+
+        function trainModel() {
+            showToast("Training model with current network data...", "info");
+            fetch('/train_model')
+                .then(response => response.json())
+                .then(data => showToast(data.status || "Model training completed successfully.", "success"))
+                .catch(error => {
+                    console.error("Training error:", error);
+                    showToast("Error training model.", "error");
+                });
+        }
+
+        function predictTraffic() {
+            fetch('/predict')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Prediction failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let resultElement = document.getElementById("prediction-result");
+                    if (data.error) {
+                        resultElement.className = "error";
+                        resultElement.innerHTML = `Error: ${data.error}`;
+                        showToast("Prediction failed", "error");
+                    } else {
+                        resultElement.className = "";
+                        resultElement.innerHTML = `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                <div>
+                                    <h3 style="margin-top: 0;">Traffic Prediction</h3>
+                                    <div style="font-size: 24px; font-weight: 600; margin-bottom: 10px;">
+                                        ${data.prediction.toFixed(2)} <span style="font-size: 16px; color: var(--text-secondary);">level</span>
+                                    </div>
+                                    <div style="height: 6px; background-color: #ecf0f1; border-radius: 3px; margin-bottom: 15px;">
+                                        <div style="height: 100%; width: ${Math.min(data.prediction * 100, 100)}%; background-color: ${getTrafficColor(data.prediction)}; border-radius: 3px;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 style="margin-top: 0;">Bandwidth Decision</h3>
+                                    <p>${data.bandwidth_decision}</p>
+                                </div>
+                                <div>
+                                    <h3 style="margin-top: 0;">Rerouting Suggestion</h3>
+                                    <p>${data.rerouting}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Update allocation chart based on prediction
+                        if (data.bandwidth_decision) {
+                            const alloc = parseInt(data.bandwidth_decision.match(/\d+/)[0]);
+                            allocChart.data.datasets[0].data = [100-alloc, alloc];
+                            allocChart.update();
+                            
+                            // Update percentage displays
+                            document.getElementById('available-bandwidth').textContent = `${100-alloc}%`;
+                            document.getElementById('allocated-bandwidth').textContent = `${alloc}%`;
+                        }
+                        
+                        showToast("Prediction completed successfully", "success");
+                    }
+                })
+                .catch(error => {
+                    console.error('Prediction error:', error);
+                    document.getElementById("prediction-result").innerHTML =
+                        "<span class='error'>Error making prediction.</span>";
+                    showToast("Error making prediction", "error");
+                });
+        }
+        
+        function getTrafficColor(value) {
+            // Convert value to a color from green (low) to red (high)
+            if (value < 0.3) return '#2ecc71';  // Green - low traffic
+            if (value < 0.6) return '#f39c12';  // Orange - medium traffic
+            return '#e74c3c';  // Red - high traffic
+        }
+
+        // Fetch data every 3 seconds
+        setInterval(fetchPackets, 3000);
+        // Initial load
+        fetchPackets();
+    </script>
+</body>
+</html>

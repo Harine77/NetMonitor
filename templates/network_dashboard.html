@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Network Traffic Monitoring Dashboard</h2>
+    <canvas id="trafficChart" width="400" height="200"></canvas>
+    <p id="bandwidthDecision">Waiting for predictions...</p>
+
+    <script>
+        async function fetchTrafficData() {
+            try {
+                const response = await fetch('/traffic_data');
+                const data = await response.json();
+                
+                if (data.length === 0) return;
+                
+                const timestamps = data.map(entry => new Date(entry.Timestamp * 1000).toLocaleTimeString());
+                const trafficValues = data.map(entry => entry.Length);
+
+                updateChart(timestamps, trafficValues);
+            } catch (error) {
+                console.error("Error fetching traffic data:", error);
+            }
+        }
+
+        async function fetchPrediction() {
+            try {
+                const response = await fetch('/reroute');
+                const result = await response.json();
+                document.getElementById('bandwidthDecision').innerText = `Decision: ${result.decision}`;
+            } catch (error) {
+                console.error("Error fetching prediction:", error);
+            }
+        }
+
+        function updateChart(labels, values) {
+            trafficChart.data.labels = labels;
+            trafficChart.data.datasets[0].data = values;
+            trafficChart.update();
+        }
+
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        const trafficChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Traffic Length',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2
+                }]
+            }
+        });
+
+        setInterval(fetchTrafficData, 3000); // Fetch data every 3 sec
+        setInterval(fetchPrediction, 5000); // Fetch predictions every 5 sec
+    </script>
+</body>
+</html>
