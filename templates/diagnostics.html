@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitoring - Diagnostics</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1, h2 {
+            color: var(--secondary-color);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .success {
+            color: var(--success-color);
+        }
+        
+        .warning {
+            color: var(--warning-color);
+        }
+        
+        .error {
+            color: var(--danger-color);
+        }
+        
+        #realtime-log {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            font-family: monospace;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f1f5f9;
+        }
+        
+        #status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background-color: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-inactive {
+            background-color: var(--danger-color);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Network Monitoring Diagnostics <span id="status-indicator"></span></h1>
+        
+        <div class="card">
+            <h2>Real-Time Data Test</h2>
+            <p>Use these controls to check if real-time data collection is working:</p>
+            <button id="btn-start-monitoring">Start Packet Monitoring</button>
+            <button id="btn-train-model">Train Model</button>
+            <button id="btn-get-packets">Get Packets</button>
+            <button id="btn-predict">Make Prediction</button>
+            <button id="btn-clear-log">Clear Log</button>
+        </div>
+        
+        <div class="card">
+            <h2>Real-Time Log <span id="packet-count">(0 packets)</span></h2>
+            <div id="realtime-log"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Latest Packets</h2>
+            <div id="packet-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Protocol</th>
+                            <th>Length</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packet-data">
+                        <tr><td colspan="5">No packets captured yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Backend Status</h2>
+            <pre id="backend-status">Checking backend status...</pre>
+        </div>
+        
+        <div class="card">
+            <h2>Troubleshooting</h2>
+            <p>If real-time updates are not working, check the following:</p>
+            <ol>
+                <li>Make sure the Flask server is running</li>
+                <li>Check if Scapy is installed and working properly</li>
+                <li>Verify network permissions for packet capture</li>
+                <li>Try running the server with administrator privileges</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Variables to track real-time status
+        let isMonitoring = false;
+        let packetCount = 0;
+        let lastCheckTime = Date.now();
+        let checkInterval;
+        let updateCount = 0;
+        
+        // DOM Elements
+        const statusIndicator = document.getElementById('status-indicator');
+        const realtimeLog = document.getElementById('realtime-log');
+        const packetCountElement = document.getElementById('packet-count');
+        const packetTableBody = document.getElementById('packet-data');
+        const backendStatus = document.getElementById('backend-status');
+        
+        // Log function with timestamps
+        function logMessage(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logItem = document.createElement('div');
+            logItem.className = type;
+            logItem.innerHTML = `[${timestamp}] ${message}`;
+            realtimeLog.appendChild(logItem);
+            realtimeLog.scrollTop = realtimeLog.scrollHeight;
+        }
+        
+        // Function to update status indicator
+        function updateStatusIndicator(active) {
+            statusIndicator.className = active ? 'status-active' : 'status-inactive';
+            isMonitoring = active;
+        }
+        
+        // Function to start packet monitoring
+        function startMonitoring() {
+            logMessage('Starting packet monitoring...', 'info');
+            
+            fetch('/start_sniffing')
+                .then(response => response.json())
+                .then(data => {
+                    logMessage(`Server response: ${data.status}`, 'success');
+                    updateStatusIndicator(true);
+                    startRealTimeChecks();
+                })
+                .catch(error => {
+                    logMessage(`Error starting monitoring: ${error}`, 'error');
+                    updateStatusIndicator(false);
+                });
+        }
+        
+        // Function to train the model
+        function trainModel() {
+            logMessage('Training model...', 'info');
+            
+            fetch('/train_model')
+                .then(response => response.json())
+                .then(data => {
+                    logMessage(`Model training: ${data.status}`, 'success');
+                })
+                .catch(error => {
+                    logMessage(`Error training model: ${error}`, 'error');
+                });
+        }
+        
+        // Function to get packet data
+        function getPackets() {
+            logMessage('Fetching packets...', 'info');
+            
+            fetch('/get_packets')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.packets || data.packets.length === 0) {
+                        logMessage('No packets captured yet', 'warning');
+                        return;
+                    }
+                    
+                    const newCount = data.packets.length;
+                    
+                    if (newCount > packetCount) {
+                        logMessage(`Received ${newCount - packetCount} new packets! Total: ${newCount}`, 'success');
+                    } else if (newCount === packetCount) {
+                        logMessage(`No new packets. Total remains: ${newCount}`, 'warning');
+                    } else {
+                        logMessage(`Packet count decreased to ${newCount} (was ${packetCount})`, 'warning');
+                    }
+                    
+                    packetCount = newCount;
+                    packetCountElement.textContent = `(${packetCount} packets)`;
+                    
+                    // Update packet table with the last 10 packets
+                    updatePacketTable(data.packets.slice(-10));
+                })
+                .catch(error => {
+                    logMessage(`Error fetching packets: ${error}`, 'error');
+                });
+        }
+        
+        // Function to make a traffic prediction
+        function makePrediction() {
+            logMessage('Making traffic prediction...', 'info');
+            
+            fetch('/predict')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        logMessage(`Prediction error: ${data.error}`, 'error');
+                    } else {
+                        logMessage(`Prediction: ${data.prediction.toFixed(4)}, Decision: ${data.bandwidth_decision}`, 'success');
+                    }
+                })
+                .catch(error => {
+                    logMessage(`Error making prediction: ${error}`, 'error');
+                });
+        }
+        
+        // Update packet table with data
+        function updatePacketTable(packets) {
+            if (!packets || packets.length === 0) {
+                packetTableBody.innerHTML = '<tr><td colspan="5">No packets captured yet</td></tr>';
+                return;
+            }
+            
+            let tableHtml = '';
+            packets.forEach(packet => {
+                const timestamp = new Date(packet[0] * 1000).toLocaleTimeString();
+                tableHtml += `<tr>
+                    <td>${timestamp}</td>
+                    <td>${packet[1] || 'N/A'}</td>
+                    <td>${packet[2] || 'N/A'}</td>
+                    <td>${packet[3] || 'N/A'}</td>
+                    <td>${packet[4] || 'N/A'}</td>
+                </tr>`;
+            });
+            
+            packetTableBody.innerHTML = tableHtml;
+        }
+        
+        // Check backend status
+        function checkBackendStatus() {
+            fetch('/get_packets')
+                .then(() => {
+                    backendStatus.innerHTML = '<span class="success">✓ Backend is reachable</span>';
+                })
+                .catch(() => {
+                    backendStatus.innerHTML = '<span class="error">✗ Error connecting to backend</span>';
+                });
+        }
+        
+        // Start regular real-time checks
+        function startRealTimeChecks() {
+            // Clear existing interval if any
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+            
+            updateCount = 0;
+            lastCheckTime = Date.now();
+            
+            // Create new interval
+            checkInterval = setInterval(() => {
+                updateCount++;
+                const now = Date.now();
+                const secondsElapsed = ((now - lastCheckTime) / 1000).toFixed(1);
+                
+                logMessage(`Automatic check #${updateCount} (${secondsElapsed}s since last check)`, 'info');
+                getPackets();
+                
+                lastCheckTime = now;
+            }, 3000);
+            
+            logMessage('Started automatic checks every 3 seconds', 'success');
+        }
+        
+        // Event Listeners
+        document.getElementById('btn-start-monitoring').addEventListener('click', startMonitoring);
+        document.getElementById('btn-train-model').addEventListener('click', trainModel);
+        document.getElementById('btn-get-packets').addEventListener('click', getPackets);
+        document.getElementById('btn-predict').addEventListener('click', makePrediction);
+        document.getElementById('btn-clear-log').addEventListener('click', () => {
+            realtimeLog.innerHTML = '';
+            logMessage('Log cleared', 'info');
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatusIndicator(false);
+            logMessage('Diagnostics page loaded', 'info');
+            checkBackendStatus();
+            getPackets(); // Initial packet check
+        });
+    </script>
+</body>
+</html> 

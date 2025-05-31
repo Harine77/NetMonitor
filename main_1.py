@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import scapy.all as scapy
 import pandas as pd
 import numpy as np
@@ -9,16 +9,20 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 import threading
 import time
 import networkx as nx
+import random
+import os
 
-
+# Initialize the Flask application
 app = Flask(__name__)
 
-# Global Variables
+# Global Variables - these need to be global so the simulation thread can access them
+global captured_packets, model_trained, model, rerouting_logs, lock
 captured_packets = []
 model_trained = False
 model = None
 rerouting_logs = []
 lock = threading.Lock()  # Thread safety lock
+simulation_running = False  # Track if simulation is running
 
 # Packet Capture Function
 def packet_callback(packet):
@@ -41,17 +45,25 @@ def packet_callback(packet):
 
 # Start Background Sniffing
 def start_sniffing():
-    scapy.sniff(prn=packet_callback, store=False)
+    """Starts packet sniffing with a limit to avoid blocking indefinitely."""
+    try:
+        # Use a count parameter to avoid blocking indefinitely
+        scapy.sniff(prn=packet_callback, store=False, count=100, timeout=10)
+        print("Finished capturing packets or timed out")
+    except Exception as e:
+        print(f"Error in packet sniffing: {e}")
 
 def run_sniffing_thread():
+    """Start sniffing in a background thread."""
     thread = threading.Thread(target=start_sniffing, daemon=True)
     thread.start()
+    return "Sniffing thread started"
 
 # Process Captured Data
 def process_data():
     """Prepares captured packets for model training."""
     with lock:
-        if not captured_packets:
+        if not captured_packets or len(captured_packets) < 10:
             return None
 
         df = pd.DataFrame(captured_packets, columns=['Timestamp', 'Source IP', 'Destination IP', 'Protocol', 'Length'])
@@ -76,6 +88,7 @@ def process_data():
         return None
 
 def build_network_graph(df):
+    """Builds a network graph based on packet data."""
     G = nx.Graph()
     link_weights = df.groupby(["Source IP", "Destination IP"])["Length"].mean().reset_index()
 
@@ -86,6 +99,7 @@ def build_network_graph(df):
 
 # Create Sequences for LSTM Model
 def create_sequences(data, seq_length=10):
+    """Creates sequence data for the LSTM model."""
     sequences, targets = [], []
     for i in range(len(data) - seq_length):
         sequences.append(data.iloc[i:i + seq_length].values)
@@ -105,7 +119,10 @@ def train_model():
         seq_length = 10
         X, y = create_sequences(df, seq_length)
 
-        # ✅ Fix: Define explicit input shape to avoid warnings
+        if len(X) == 0 or len(y) == 0:
+            return None  # Not enough sequence data
+            
+        # Define explicit input shape to avoid warnings
         model = Sequential([
             Input(shape=(seq_length, X.shape[2])),  
             LSTM(50, return_sequences=True),
@@ -125,7 +142,9 @@ def train_model():
     except Exception as e:
         print(f"Model training error: {e}")
         return None
+
 def allocate_bandwidth(predicted_value):
+    """Determine bandwidth allocation based on prediction."""
     if predicted_value < 0.1:
         return "Allocate 80% bandwidth"
     elif 0.1 <= predicted_value < 0.2:
@@ -136,10 +155,40 @@ def allocate_bandwidth(predicted_value):
         return "Allocate 20% bandwidth (Severe Congestion)"
 
 def suggest_rerouting():
+    """Predicts congestion and suggests rerouting."""
     global model, rerouting_logs
 
+    # If no model is trained, return a default prediction for testing
+    if not model_trained:
+        # Generate a random prediction between 0 and 0.5
+        predicted_traffic = random.uniform(0, 0.5)
+        bandwidth_decision = allocate_bandwidth(predicted_traffic)
+        
+        reroute_msg = "✅ No rerouting required."
+        if predicted_traffic > 0.3:
+            reroute_msg = "⚠️ High congestion detected! Rerouting required."
+        
+        log_entry = {
+            "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+            "prediction": float(predicted_traffic),
+            "bandwidth_decision": bandwidth_decision,
+            "rerouting": reroute_msg,
+            "reroute": []
+        }
+        
+        with lock:
+            rerouting_logs.append(log_entry)
+            
+        return {
+            "prediction": float(round(predicted_traffic, 4)),
+            "bandwidth_decision": bandwidth_decision,
+            "rerouting": reroute_msg,
+            "reroute": []
+        }
+
+    # Try with real model prediction
     df = process_data()
-    if df is None or not model_trained or len(df) < 20:
+    if df is None or len(df) < 20:
         return {"error": "Not enough data or model not trained yet."}
 
     try:
@@ -180,13 +229,58 @@ def suggest_rerouting():
             "prediction": float(round(predicted_traffic, 4)),
             "bandwidth_decision": bandwidth_decision,
             "rerouting": reroute_msg,
-            "reroute": reroute_path  # This will be used in the frontend for the graph
+            "reroute": reroute_path
         }
 
     except Exception as e:
         print(f"Prediction error: {e}")
         return {"error": "Failed to make prediction."}
 
+# Simulation functions for testing
+def generate_dummy_packet():
+    """Generate a single dummy packet for simulation."""
+    timestamp = time.time()
+    src_ip = f"192.168.1.{random.randint(1, 20)}"
+    dst_ip = f"192.168.1.{random.randint(21, 40)}"
+    proto = random.choice([6, 17])  # TCP or UDP
+    length = random.randint(64, 1500)
+    
+    return [timestamp, src_ip, dst_ip, proto, length]
+
+def simulation_thread_function():
+    """Function to run in a thread to simulate packet capture."""
+    global simulation_running
+    
+    simulation_running = True
+    print("Starting packet simulation...")
+    
+    while simulation_running:
+        # Generate a dummy packet
+        packet = generate_dummy_packet()
+        
+        # Add it to our captured packets with the lock
+        with lock:
+            captured_packets.append(packet)
+            if len(captured_packets) > 1000:
+                captured_packets.pop(0)
+                
+        # Sleep for a random interval (0.2 to 2 seconds)
+        time.sleep(random.uniform(0.2, 2))
+
+def start_simulation():
+    """Start the simulation thread."""
+    simulation_thread = threading.Thread(target=simulation_thread_function, daemon=True)
+    simulation_thread.start()
+    print("Simulation thread started")
+    return simulation_thread
+
+def stop_simulation():
+    """Stop the simulation thread."""
+    global simulation_running
+    simulation_running = False
+    print("Stopping simulation thread")
+
+# Flask Routes
 @app.route('/')
 def open_page():
     return render_template('open.html')
@@ -196,19 +290,79 @@ def open_page():
 def home():
     return render_template('index.html')
 
+# Additional routes for sidebar navigation
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/network_map')
+def network_map():
+    return render_template('network_map.html')
+
+@app.route('/security')
+def security():
+    return render_template('security.html')
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/alerts')
+def alerts():
+    return render_template('alerts.html')
+
+@app.route('/history')
+def history():
+    return render_template('history.html')
+
+@app.route('/reports')
+def reports():
+    return render_template('reports.html')
+
+# Route for diagnostics page
+@app.route('/diagnostics')
+def diagnostics():
+    return render_template('diagnostics.html')
+
 @app.route('/start_sniffing')
 def start_capture():
-    run_sniffing_thread()
-    return jsonify({"status": "Monitoring started..."})
+    """Endpoint to start packet capture (or simulation in testing mode)."""
+    # For testing, we'll use simulation instead of real packet capture
+    if os.environ.get('SIMULATE', 'false').lower() == 'true':
+        # If simulation is enabled through environment variable
+        if not simulation_running:
+            start_simulation()
+        return jsonify({"status": "Simulation started - packets will be generated automatically"})
+    else:
+        # Real packet capture
+        status = run_sniffing_thread()
+        return jsonify({"status": status})
+
+@app.route('/start_simulation')
+def start_sim_route():
+    """Explicit endpoint to start simulation."""
+    if not simulation_running:
+        start_simulation()
+    return jsonify({"status": "Simulation started"})
+
+@app.route('/stop_simulation')
+def stop_sim_route():
+    """Endpoint to stop simulation."""
+    if simulation_running:
+        stop_simulation()
+    return jsonify({"status": "Simulation stopped"})
 
 @app.route('/train_model')
 def train():
-    if train_model():
+    """Endpoint to train the model."""
+    result = train_model()
+    if result is not None:
         return jsonify({"status": "Model trained successfully!"})
     return jsonify({"status": "Not enough data to train model."})
 
 @app.route('/get_bandwidth')
 def get_bandwidth():
+    """Endpoint to get bandwidth allocation."""
     decision = suggest_rerouting()
     return jsonify(decision)
 
@@ -229,7 +383,7 @@ def predict():
     """Returns predicted traffic data."""
     result = suggest_rerouting()
     return jsonify(result)
-# Add to your existing Flask routes
+
 @app.route('/live_data')
 def live_data():
     """Endpoint for live visualization data"""
@@ -245,95 +399,49 @@ def live_data():
             "prediction": suggest_rerouting()  # Includes bandwidth decision
         })
 
+@app.route('/set_theme_preference', methods=['POST'])
+def set_theme_preference():
+    """Endpoint for saving user theme preference on the server side (if needed)"""
+    preference = request.json.get('darkMode', False)
+    # Here you could save the preference to a database if needed
+    return jsonify({"status": "success", "darkMode": preference})
+
+@app.route('/server_status')
+def server_status():
+    """Returns the server status and statistics"""
+    with lock:
+        return jsonify({
+            "status": "running",
+            "packet_count": len(captured_packets),
+            "last_packet_time": captured_packets[-1][0] if captured_packets else None,
+            "model_trained": model_trained,
+            "simulation_running": simulation_running,
+            "server_time": time.time()
+        })
+
+@app.route('/clear_data')
+def clear_data():
+    """Clear all captured data for testing purposes."""
+    global captured_packets, rerouting_logs
+    with lock:
+        captured_packets = []
+        rerouting_logs = []
+    return jsonify({"status": "Data cleared"})
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    # Generate some initial test packets
+    print("Generating initial test packets...")
+    for i in range(20):
+        captured_packets.append(generate_dummy_packet())
+    print(f"Added {len(captured_packets)} test packets")
     
-
-
-
-# import pandas as pd
-# import joblib
-# import time
-# import networkx as nx
-# from scapy.all import sniff, IP, TCP
-
-# # Load pre-trained model and scaler
-# model = joblib.load("trained_model.pkl")
-# scaler = joblib.load("scaler.pkl")
-
-# # Initialize a log list
-# logs = []
-
-# # Function to build a network graph
-# def build_network_graph(df):
-#     G = nx.Graph()
-#     link_weights = df.groupby(["Source IP", "Destination IP"])["Length"].mean().reset_index()
-
-#     for _, row in link_weights.iterrows():
-#         G.add_edge(row["Source IP"], row["Destination IP"], weight=row["Length"])
-
-#     return G
-
-# # Function to analyze traffic and make decisions
-# def analyze_traffic(df):
-#     X = df[["Length", "Time", "Source Port", "Destination Port"]]
-#     X_scaled = scaler.transform(X)
-#     prediction = model.predict(X_scaled)
-#     predicted_traffic = prediction.mean()
-
-#     if predicted_traffic > 0.7:
-#         bandwidth_decision = "🔴 Reduce bandwidth"
-#     elif predicted_traffic < 0.3:
-#         bandwidth_decision = "🟢 Increase bandwidth"
-#     else:
-#         bandwidth_decision = "🟡 Maintain bandwidth"
-
-#     # Rerouting logic
-#     if predicted_traffic > 0.3:
-#         G = build_network_graph(df)
-#         source, destination = df.iloc[-1]['Source IP'], df.iloc[-1]['Destination IP']
-#         try:
-#             path = nx.shortest_path(G, source, destination, weight='weight')
-#             reroute_msg = f"⚠️ High congestion detected! Suggested rerouting path: {path}"
-#         except nx.NetworkXNoPath:
-#             reroute_msg = "⚠️ High congestion, but no alternate path found."
-#     else:
-#         reroute_msg = "✅ No rerouting required."
-
-#     # Add log entry
-#     log_entry = {
-#         "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
-#         "prediction": float(round(predicted_traffic, 4)),
-#         "bandwidth_decision": bandwidth_decision,
-#         "rerouting": reroute_msg
-#     }
-
-#     logs.append(log_entry)
-
-#     # Print the most recent log
-#     print(f"[{log_entry['timestamp']}] Traffic: {log_entry['prediction']}, "
-#           f"Decision: {log_entry['bandwidth_decision']}, Rerouting: {log_entry['rerouting']}")
-
-# # Function to extract features from packets
-# def extract_features(packet):
-#     if IP in packet and TCP in packet:
-#         return {
-#             "Source IP": packet[IP].src,
-#             "Destination IP": packet[IP].dst,
-#             "Source Port": packet[TCP].sport,
-#             "Destination Port": packet[TCP].dport,
-#             "Length": len(packet),
-#             "Time": time.time()
-#         }
-
-# # Sniff packets and process them
-# def process_packet(packet):
-#     features = extract_features(packet)
-#     if features:
-#         df = pd.DataFrame([features])
-#         analyze_traffic(df)
-
-# # Start sniffing
-# if __name__ == "__main__":
-#     print("🚦 Real-time network traffic monitoring started...\n")
-#     sniff(prn=process_packet, store=False)
+    # Set environment variable for simulation mode if needed
+    # os.environ['SIMULATE'] = 'true'
+    
+    # Start simulation automatically if simulation mode is enabled
+    if os.environ.get('SIMULATE', 'false').lower() == 'true':
+        start_simulation()
+        print("Automatic simulation started")
+    
+    # Run the Flask application
+    app.run(debug=True, host="0.0.0.0")

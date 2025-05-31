@@ -26,7 +26,7 @@
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: #f8fafc;
-            background-image: linear-gradient(rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.9)), url("{{ url_for('static', filename='images/network_bg.jpg') }}");
+            background-image: linear-gradient(rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.9)), url("{{ url_for('static', filename='images/network_bg.jpeg') }}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -133,7 +133,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             font-size: 1.125rem;
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 20px rgba(9, 32, 82, 0.3);
             margin-top: 24px;
             border: none;
             cursor: pointer;
@@ -553,7 +553,7 @@
     <header class="header">
         <div class="header-container">
             <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Network Monitoring Logo">
+                <img src="{{ url_for('static', filename='images/logo.png.png') }}" alt="Network Monitoring Logo">
                 <span class="logo-text">NetMonitor</span>
             </div>
             <nav class="nav-links">
@@ -779,7 +779,7 @@
         <div class="footer-container">
             <div class="footer-info">
                 <div class="footer-logo">
-                    <img src="{{ url_for('static', filename='images/logo-white.png') }}" alt="Network Monitoring Logo">
+                    <img src="{{ url_for('static', filename='images/logo.png.png') }}" alt="Network Monitoring Logo">
                     <span class="footer-logo-text">NetMonitor</span>
                 </div>
                 <p>

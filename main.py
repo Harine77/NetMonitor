@@ -213,8 +213,46 @@ def suggest_rerouting():
 
 # Flask Routes
 @app.route('/')
+def index():
+    return render_template('open.html')
+
+@app.route('/open_page')
+def open_page():
+    return render_template('open.html')
+
+# Route for the Index Page (main dashboard page)
+@app.route('/home')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
+
+# New routes for sidebar navigation
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/network_map')
+def network_map():
+    return render_template('network_map.html')
+
+@app.route('/security')
+def security():
+    return render_template('security.html')
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/alerts')
+def alerts():
+    return render_template('alerts.html')
+
+@app.route('/history')
+def history():
+    return render_template('history.html')
+
+@app.route('/reports')
+def reports():
+    return render_template('reports.html')
 
 @app.route('/start_sniffing')
 def start_capture():

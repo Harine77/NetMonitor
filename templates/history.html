@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMonitor | History</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #1e293b;
+            --accent-color: #f97316;
+            --background-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            width: 220px;
+            z-index: 10;
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-logo img {
+            height: 36px;
+            margin-right: 10px;
+        }
+        
+        .sidebar-logo span {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 10px;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-divider {
+            margin: 20px 0;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            padding: 0 25px;
+            margin: 20px 0 10px;
+        }
+        
+        .main-content {
+            grid-column: 2;
+            padding: 20px 30px;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .page-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 16px 20px;
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .history-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .history-filter {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .date-input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .history-table th {
+            font-weight: 600;
+            color: var(--text-primary);
+            background-color: #f8fafc;
+        }
+        
+        .history-table tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        .event-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .event-info {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .event-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .event-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .event-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .page-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .page-btn:hover:not(.active) {
+            background-color: #f8fafc;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/logo.png.png') }}" alt="NetMonitor Logo">
+                <span>NetMonitor</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/home"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                <li><a href="/analytics"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="/network_map"><i class="fas fa-network-wired"></i> Network Map</a></li>
+                <li><a href="/security"><i class="fas fa-shield-alt"></i> Security</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <div class="sidebar-menu-title">Management</div>
+            <ul class="sidebar-menu">
+                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="/alerts"><i class="fas fa-bell"></i> Alerts</a></li>
+                <li><a href="/history" class="active"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="/reports"><i class="fas fa-file-alt"></i> Reports</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#"><i class="fas fa-question-circle"></i> Help</a></li>
+                <li><a href="{{ url_for('open_page') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Event History</h1>
+                    <p>Detailed history of all system events and activities</p>
+                </div>
+                
+                <div class="date-filter">
+                    <span>Date Range:</span>
+                    <input type="date" class="date-input" value="2023-10-01">
+                    <span>to</span>
+                    <input type="date" class="date-input" value="2023-10-31">
+                    <button class="history-filter">Apply</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span>Event Logs</span>
+                    <div class="history-filters">
+                        <select class="history-filter">
+                            <option>All Events</option>
+                            <option>System</option>
+                            <option>Security</option>
+                            <option>Network</option>
+                            <option>User</option>
+                        </select>
+                        
+                        <select class="history-filter">
+                            <option>All Levels</option>
+                            <option>Info</option>
+                            <option>Warning</option>
+                            <option>Error</option>
+                            <option>Success</option>
+                        </select>
+                        
+                        <button class="history-filter">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Event Type</th>
+                                <th>Level</th>
+                                <th>Message</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2023-10-31 14:32:15</td>
+                                <td>System</td>
+                                <td><span class="event-type event-success">Success</span></td>
+                                <td>System backup completed successfully</td>
+                                <td>Backup Service</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 13:15:42</td>
+                                <td>Security</td>
+                                <td><span class="event-type event-warning">Warning</span></td>
+                                <td>Multiple failed login attempts detected</td>
+                                <td>Auth Service</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 12:45:09</td>
+                                <td>Network</td>
+                                <td><span class="event-type event-info">Info</span></td>
+                                <td>Link state changed on interface eth0</td>
+                                <td>Router-01</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 11:23:57</td>
+                                <td>User</td>
+                                <td><span class="event-type event-info">Info</span></td>
+                                <td>User 'admin' logged in</td>
+                                <td>Auth Service</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 10:05:30</td>
+                                <td>Network</td>
+                                <td><span class="event-type event-error">Error</span></td>
+                                <td>High packet loss detected on WAN link</td>
+                                <td>Monitoring</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 09:42:18</td>
+                                <td>System</td>
+                                <td><span class="event-type event-success">Success</span></td>
+                                <td>Software update installed: v2.3.4</td>
+                                <td>Update Service</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-31 08:15:03</td>
+                                <td>Network</td>
+                                <td><span class="event-type event-warning">Warning</span></td>
+                                <td>Bandwidth threshold exceeded on Switch-02</td>
+                                <td>Monitoring</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-30 23:42:51</td>
+                                <td>Security</td>
+                                <td><span class="event-type event-error">Error</span></td>
+                                <td>Firewall rule violation: Unauthorized access attempt</td>
+                                <td>Firewall</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-30 22:11:39</td>
+                                <td>System</td>
+                                <td><span class="event-type event-info">Info</span></td>
+                                <td>Scheduled maintenance started</td>
+                                <td>System</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-30 20:35:14</td>
+                                <td>User</td>
+                                <td><span class="event-type event-info">Info</span></td>
+                                <td>User 'admin' updated network configuration</td>
+                                <td>Config Service</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination">
+                        <button class="page-btn"><i class="fas fa-angle-double-left"></i></button>
+                        <button class="page-btn"><i class="fas fa-angle-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">4</button>
+                        <button class="page-btn">5</button>
+                        <button class="page-btn"><i class="fas fa-angle-right"></i></button>
+                        <button class="page-btn"><i class="fas fa-angle-double-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                &copy; 2023 NetMonitor | Smart Network Monitoring System | All Rights Reserved
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pagination functionality
+        document.querySelectorAll('.page-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.classList.contains('active')) return;
+                
+                // Remove active class from current active button
+                document.querySelector('.page-btn.active')?.classList.remove('active');
+                
+                // Add active class to clicked button if it has a number
+                if (!this.innerHTML.includes('fas')) {
+                    this.classList.add('active');
+                }
+                
+                // Simulate page change
+                alert(`Navigating to page ${this.innerHTML}`);
+            });
+        });
+        
+        // Export button functionality
+        document.querySelector('button.history-filter').addEventListener('click', function() {
+            alert('Exporting event logs as CSV...');
+        });
+        
+        // Date range filter
+        document.querySelector('.date-filter button').addEventListener('click', function() {
+            const startDate = document.querySelectorAll('.date-input')[0].value;
+            const endDate = document.querySelectorAll('.date-input')[1].value;
+            
+            alert(`Applying date filter: ${startDate} to ${endDate}`);
+        });
+        
+        // Event type and level filters
+        document.querySelectorAll('select.history-filter').forEach(select => {
+            select.addEventListener('change', function() {
+                alert(`Filter applied: ${this.value}`);
+            });
+        });
+    </script>
+</body>
+</html> 

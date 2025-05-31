@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMonitor | Network Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #1e293b;
+            --accent-color: #f97316;
+            --background-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            width: 220px;
+            z-index: 10;
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-logo img {
+            height: 36px;
+            margin-right: 10px;
+        }
+        
+        .sidebar-logo span {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 10px;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-divider {
+            margin: 20px 0;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            padding: 0 25px;
+            margin: 20px 0 10px;
+        }
+        
+        .main-content {
+            grid-column: 2;
+            padding: 20px 30px;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .page-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 16px 20px;
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        #network-visualization {
+            background: white;
+            border-radius: var(--border-radius);
+            height: 600px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .map-control {
+            background-color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        
+        .map-control:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .network-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .detail-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/logo.png.png') }}" alt="NetMonitor Logo">
+                <span>NetMonitor</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/home"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                <li><a href="/analytics"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="/network_map" class="active"><i class="fas fa-network-wired"></i> Network Map</a></li>
+                <li><a href="/security"><i class="fas fa-shield-alt"></i> Security</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <div class="sidebar-menu-title">Management</div>
+            <ul class="sidebar-menu">
+                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="/alerts"><i class="fas fa-bell"></i> Alerts</a></li>
+                <li><a href="/history"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="/reports"><i class="fas fa-file-alt"></i> Reports</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#"><i class="fas fa-question-circle"></i> Help</a></li>
+                <li><a href="{{ url_for('open_page') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Network Topology Map</h1>
+                    <p>Interactive visualization of network devices and connections</p>
+                </div>
+                
+                <div class="view-controls">
+                    <button id="view-physical" class="view-btn active">Physical View</button>
+                    <button id="view-logical" class="view-btn">Logical View</button>
+                </div>
+            </div>
+            
+            <div class="network-details">
+                <div class="detail-card">
+                    <div class="detail-value">24</div>
+                    <div class="detail-label">Routers</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-value">48</div>
+                    <div class="detail-label">Switches</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-value">128</div>
+                    <div class="detail-label">End Devices</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-value">3</div>
+                    <div class="detail-label">Current Alerts</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span>Network Topology</span>
+                    <div class="header-controls">
+                        <select id="layout-type">
+                            <option value="force">Force Directed</option>
+                            <option value="tree">Hierarchical</option>
+                            <option value="radial">Radial</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="network-visualization">
+                        <div class="map-controls">
+                            <div class="map-control" id="zoom-in"><i class="fas fa-plus"></i></div>
+                            <div class="map-control" id="zoom-out"><i class="fas fa-minus"></i></div>
+                            <div class="map-control" id="reset-view"><i class="fas fa-undo"></i></div>
+                            <div class="map-control" id="export-map"><i class="fas fa-download"></i></div>
+                        </div>
+                        
+                        <div class="map-legend">
+                            <h4 style="margin-bottom: 10px;">Legend</h4>
+                            <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6;"></div> Router</div>
+                            <div class="legend-item"><div class="legend-color" style="background-color: #10b981;"></div> Switch</div>
+                            <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> End Device</div>
+                            <div class="legend-item"><div class="legend-color" style="background-color: #ef4444;"></div> Critical Alert</div>
+                            <div class="legend-item"><div class="legend-color" style="background-color: #8b5cf6;"></div> VPN Connection</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Device Details</div>
+                <div class="card-body">
+                    <p id="device-info">Click on a device in the network map to see its details here.</p>
+                </div>
+            </div>
+            
+            <div class="footer">
+                &copy; 2023 NetMonitor | Smart Network Monitoring System | All Rights Reserved
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the network map
+            initNetworkMap();
+            
+            // Set up polling for network map updates
+            setInterval(updateNetworkMap, 10000); // Update every 10 seconds
+        });
+        
+        // Network map variables
+        let networkData;
+        let simulation;
+        let svg;
+        let g;
+        let link;
+        let node;
+        
+        // Initialize network map
+        function initNetworkMap() {
+            // Create initial SVG container
+            const width = document.getElementById('network-visualization').clientWidth;
+            const height = document.getElementById('network-visualization').clientHeight;
+            
+            svg = d3.select('#network-visualization')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+                
+            g = svg.append('g');
+            
+            // Add zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+                
+            svg.call(zoom);
+            
+            // Fetch initial network data
+            fetchNetworkData();
+            
+            // Add controls functionality
+            document.getElementById('zoom-in').addEventListener('click', () => {
+                svg.transition().call(zoom.scaleBy, 1.2);
+            });
+            
+            document.getElementById('zoom-out').addEventListener('click', () => {
+                svg.transition().call(zoom.scaleBy, 0.8);
+            });
+            
+            document.getElementById('reset-view').addEventListener('click', () => {
+                svg.transition().call(zoom.transform, d3.zoomIdentity);
+            });
+            
+            document.getElementById('refresh-map').addEventListener('click', () => {
+                fetchNetworkData();
+            });
+            
+            // Add legend for map
+            addNetworkMapLegend();
+        }
+        
+        // Fetch network data from server
+        function fetchNetworkData() {
+            // Show loading indicator
+            const loadingIndicator = document.getElementById('map-loading');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'flex';
+            }
+            
+            fetch('/get_network_map_data')
+                .then(response => response.json())
+                .then(data => {
+                    networkData = data;
+                    renderNetworkMap(data);
+                    
+                    // Hide loading indicator
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching network map data:', error);
+                    // Hide loading indicator
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'none';
+                    }
+                    
+                    // Show error message
+                    document.getElementById('device-info').innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Error loading network map data. Please try refreshing.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Update network map with new data
+        function updateNetworkMap() {
+            fetchNetworkData();
+        }
+        
+        // Render network map with provided data
+        function renderNetworkMap(data) {
+            // Clear existing map elements
+            g.selectAll('.link').remove();
+            g.selectAll('.node').remove();
+            
+            // Create a force simulation
+            simulation = d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(svg.attr('width') / 2, svg.attr('height') / 2))
+                .force('collision', d3.forceCollide().radius(50));
+                
+            // Draw links
+            link = g.selectAll('.link')
+                .data(data.links)
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .style('stroke', d => d.status === 'normal' ? '#cbd5e1' : 
+                                  d.status === 'congested' ? '#f59e0b' : '#ef4444')
+                .style('stroke-width', d => d.bandwidth.includes('Gbps') ? 3 : 1.5)
+                .style('stroke-dasharray', d => d.status === 'down' ? '5,5' : 'none');
+                
+            // Create node groups
+            node = g.selectAll('.node')
+                .data(data.nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', dragStarted)
+                    .on('drag', dragging)
+                    .on('end', dragEnded))
+                .on('click', showDeviceInfo);
+                
+            // Add circles for nodes
+            node.append('circle')
+                .attr('r', d => d.type === 'router' ? 20 : d.type === 'switch' ? 15 : 10)
+                .style('fill', d => {
+                    if (d.status === 'critical') return '#ef4444';
+                    if (d.status === 'warning') return '#f59e0b';
+                    if (d.status === 'offline') return '#94a3b8';
+                    
+                    return d.type === 'router' ? '#3b82f6' : 
+                          d.type === 'switch' ? '#10b981' : '#8b5cf6';
+                })
+                .style('stroke', '#fff')
+                .style('stroke-width', 2);
+                
+            // Add icons to nodes
+            node.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('fill', 'white')
+                .style('font-family', 'FontAwesome')
+                .style('font-size', d => d.type === 'router' ? '12px' : '10px')
+                .text(d => {
+                    return d.type === 'router' ? '\uf233' : 
+                          d.type === 'switch' ? '\uf6ff' : '\uf109';
+                });
+                
+            // Add labels
+            node.append('text')
+                .attr('dy', 30)
+                .attr('text-anchor', 'middle')
+                .style('fill', '#0f172a')
+                .style('font-size', '12px')
+                .text(d => d.name);
+                
+            // Update positions during simulation
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                    
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+            
+            // Update device count info
+            updateDeviceCounts(data);
+        }
+        
+        // Add legend for network map
+        function addNetworkMapLegend() {
+            const legendContainer = document.createElement('div');
+            legendContainer.className = 'network-map-legend';
+            legendContainer.innerHTML = `
+                <div class="legend-title">Legend</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background-color: #3b82f6;"></div>
+                        <div class="legend-label">Router</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background-color: #10b981;"></div>
+                        <div class="legend-label">Switch</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background-color: #8b5cf6;"></div>
+                        <div class="legend-label">Server/Workstation</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background-color: #cbd5e1;"></div>
+                        <div class="legend-label">Normal Connection</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background-color: #f59e0b;"></div>
+                        <div class="legend-label">Congested</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background-color: #ef4444; border-style: dashed;"></div>
+                        <div class="legend-label">Down</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add legend styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .network-map-legend {
+                    position: absolute;
+                    bottom: 15px;
+                    left: 15px;
+                    background-color: white;
+                    border-radius: 8px;
+                    padding: 10px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    font-size: 12px;
+                    z-index: 10;
+                }
+                
+                .legend-title {
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                }
+                
+                .legend-items {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 8px;
+                }
+                
+                .legend-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                
+                .legend-icon {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                }
+                
+                .legend-line {
+                    width: 20px;
+                    height: 3px;
+                    border-radius: 1px;
+                }
+                
+                .map-loading {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(255, 255, 255, 0.8);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 20;
+                    border-radius: inherit;
+                }
+                
+                .loader {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #3b82f6;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                .error-message {
+                    color: #ef4444;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    text-align: center;
+                }
+                
+                .error-message i {
+                    font-size: 24px;
+                }
+            `;
+            
+            document.head.appendChild(style);
+            
+            // Add loading indicator div
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'map-loading';
+            loadingIndicator.className = 'map-loading';
+            loadingIndicator.innerHTML = '<div class="loader"></div>';
+            loadingIndicator.style.display = 'none';
+            
+            // Add to the visualization container
+            const visualizationContainer = document.getElementById('network-visualization');
+            visualizationContainer.appendChild(legendContainer);
+            visualizationContainer.appendChild(loadingIndicator);
+        }
+        
+        // Update device count information
+        function updateDeviceCounts(data) {
+            const deviceInfo = document.getElementById('device-info');
+            if (!deviceInfo) return;
+            
+            // Count different types of devices
+            const routerCount = data.nodes.filter(d => d.type === 'router').length;
+            const switchCount = data.nodes.filter(d => d.type === 'switch').length;
+            const serverCount = data.nodes.filter(d => d.type === 'server').length;
+            const workstationCount = data.nodes.filter(d => d.type === 'workstation').length;
+            
+            // Count links with different status
+            const totalLinks = data.links.length;
+            const normalLinks = data.links.filter(d => d.status === 'normal').length;
+            const congestedLinks = data.links.filter(d => d.status === 'congested').length;
+            const downLinks = data.links.filter(d => d.status === 'down').length;
+            
+            // Display summary
+            deviceInfo.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <h4 style="margin-bottom: 10px;">Devices (${data.nodes.length})</h4>
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px;">
+                            <span>Routers:</span> <span>${routerCount}</span>
+                            <span>Switches:</span> <span>${switchCount}</span>
+                            <span>Servers:</span> <span>${serverCount}</span>
+                            <span>Workstations:</span> <span>${workstationCount}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 10px;">Links (${totalLinks})</h4>
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px;">
+                            <span>Normal:</span> <span>${normalLinks}</span>
+                            <span>Congested:</span> <span>${congestedLinks}</span>
+                            <span>Down:</span> <span>${downLinks}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; font-size: 13px; color: #64748b;">
+                    Click on a device to view details
+                </div>
+            `;
+        }
+        
+        // Show device info when node is clicked
+        function showDeviceInfo(event, d) {
+            const deviceInfo = document.getElementById('device-info');
+            deviceInfo.innerHTML = `
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px;">
+                    <strong>Name:</strong> <span>${d.name}</span>
+                    <strong>Type:</strong> <span>${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</span>
+                    <strong>IP Address:</strong> <span>${d.ip}</span>
+                    <strong>Status:</strong> <span style="color: ${
+                        d.status === 'online' ? '#10b981' : 
+                        d.status === 'warning' ? '#f59e0b' : 
+                        d.status === 'critical' ? '#ef4444' : '#94a3b8'
+                    };">${d.status.charAt(0).toUpperCase() + d.status.slice(1)}</span>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="device-action-btn">View Traffic</button>
+                    <button class="device-action-btn">Ping Device</button>
+                </div>
+            `;
+            
+            // Add temporary click handlers for the buttons
+            const buttons = deviceInfo.querySelectorAll('.device-action-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    alert(`Action "${this.textContent}" for ${d.name} will be implemented in a future update.`);
+                });
+            });
+        }
+            
+        // Drag functions
+        function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragging(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html> 

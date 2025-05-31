@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMonitor | Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #1e293b;
+            --accent-color: #f97316;
+            --background-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-radius: 10px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            width: 220px;
+            z-index: 10;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-logo img {
+            height: 36px;
+            margin-right: 10px;
+        }
+        
+        .sidebar-logo span {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 10px;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #cbd5e1;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-divider {
+            margin: 20px 0;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            padding: 0 25px;
+            margin: 20px 0 10px;
+        }
+        
+        .main-content {
+            grid-column: 2;
+            padding: 20px 30px;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .page-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 25px;
+        }
+        
+        .settings-nav {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px 0;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .settings-nav-list {
+            list-style: none;
+        }
+        
+        .settings-nav-item {
+            padding: 0;
+        }
+        
+        .settings-nav-link {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+        
+        .settings-nav-link.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .settings-nav-link:hover:not(.active) {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+        
+        .settings-nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .settings-content {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .settings-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-switch {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        .form-text {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-action {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            border: 1px solid #cbd5e1;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+        
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 1024px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                grid-column: 1;
+            }
+            
+            .settings-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings-nav {
+                margin-bottom: 20px;
+            }
+            
+            .settings-nav-list {
+                display: flex;
+                overflow-x: auto;
+                padding: 5px;
+            }
+            
+            .settings-nav-link {
+                white-space: nowrap;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                padding: 12px 15px;
+            }
+            
+            .settings-nav-link.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--primary-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/logo.png.png') }}" alt="NetMonitor Logo">
+                <span>NetMonitor</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/home"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                <li><a href="/analytics"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="/network_map"><i class="fas fa-network-wired"></i> Network Map</a></li>
+                <li><a href="/security"><i class="fas fa-shield-alt"></i> Security</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <div class="sidebar-menu-title">Management</div>
+            <ul class="sidebar-menu">
+                <li><a href="/settings" class="active"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="/alerts"><i class="fas fa-bell"></i> Alerts</a></li>
+                <li><a href="/history"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="/reports"><i class="fas fa-file-alt"></i> Reports</a></li>
+            </ul>
+            
+            <div class="sidebar-divider"></div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#"><i class="fas fa-question-circle"></i> Help</a></li>
+                <li><a href="{{ url_for('open_page') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Settings</h1>
+                    <p>Configure system preferences and parameters</p>
+                </div>
+            </div>
+            
+            <div class="settings-layout">
+                <div class="settings-nav">
+                    <ul class="settings-nav-list">
+                        <li class="settings-nav-item">
+                            <a href="#general" class="settings-nav-link active" data-target="general-settings">
+                                <i class="fas fa-sliders-h"></i> General
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#user" class="settings-nav-link" data-target="user-settings">
+                                <i class="fas fa-user"></i> User Profile
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#notifications" class="settings-nav-link" data-target="notification-settings">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#appearance" class="settings-nav-link" data-target="appearance-settings">
+                                <i class="fas fa-paint-brush"></i> Appearance
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#monitoring" class="settings-nav-link" data-target="monitoring-settings">
+                                <i class="fas fa-chart-line"></i> Monitoring
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#security" class="settings-nav-link" data-target="security-settings">
+                                <i class="fas fa-shield-alt"></i> Security
+                            </a>
+                        </li>
+                        <li class="settings-nav-item">
+                            <a href="#api" class="settings-nav-link" data-target="api-settings">
+                                <i class="fas fa-code"></i> API Access
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="settings-content">
+                    <!-- General Settings -->
+                    <div id="general-settings" class="settings-panel active">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">General Settings</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">System Name</label>
+                                <input type="text" class="form-control" value="NetMonitor Pro">
+                                <div class="form-text">This name appears in the browser tab and reports.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Dashboard Refresh Rate</label>
+                                <select class="form-control">
+                                    <option value="5">5 seconds</option>
+                                    <option value="10" selected>10 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                    <option value="60">1 minute</option>
+                                </select>
+                                <div class="form-text">How often the dashboard data refreshes automatically.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    Enable Auto-Refresh
+                                </label>
+                                <div class="form-text">Automatically refresh dashboard data at the rate specified above.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Default Page</label>
+                                <select class="form-control">
+                                    <option value="dashboard" selected>Dashboard</option>
+                                    <option value="analytics">Analytics</option>
+                                    <option value="network">Network Map</option>
+                                    <option value="security">Security</option>
+                                </select>
+                                <div class="form-text">The page that loads when you first log in.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">Data Management</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Data Retention Period</label>
+                                <select class="form-control">
+                                    <option value="7">7 days</option>
+                                    <option value="30" selected>30 days</option>
+                                    <option value="90">90 days</option>
+                                    <option value="180">180 days</option>
+                                    <option value="365">1 year</option>
+                                </select>
+                                <div class="form-text">How long to keep historical data before automatic cleanup.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    Enable Data Compression
+                                </label>
+                                <div class="form-text">Compress older data to save storage space.</div>
+                            </div>
+                            
+                            <div class="form-action">
+                                <button class="btn btn-secondary" id="reset-btn">Reset to Defaults</button>
+                                <button class="btn btn-primary" id="save-btn">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Profile Settings -->
+                    <div id="user-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">User Profile</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" value="Network Administrator">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" value="admin@example.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Position</label>
+                                <input type="text" class="form-control" value="Network Engineer">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Time Zone</label>
+                                <select class="form-control">
+                                    <option>UTC-08:00 Pacific Time</option>
+                                    <option>UTC-07:00 Mountain Time</option>
+                                    <option selected>UTC-05:00 Eastern Time</option>
+                                    <option>UTC+00:00 Greenwich Mean Time</option>
+                                    <option>UTC+01:00 Central European Time</option>
+                                    <option>UTC+08:00 China Standard Time</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-action">
+                                <button class="btn btn-secondary">Cancel</button>
+                                <button class="btn btn-primary">Update Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Settings -->
+                    <div id="notification-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">Notification Preferences</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    Email Notifications
+                                </label>
+                                <div class="form-text">Receive alerts and notifications via email.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    Browser Notifications
+                                </label>
+                                <div class="form-text">Receive alerts and notifications in your browser.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-switch">
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                    SMS Notifications
+                                </label>
+                                <div class="form-text">Receive critical alerts via SMS (requires additional setup).</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Notification Level</label>
+                                <select class="form-control">
+                                    <option value="all">All Notifications</option>
+                                    <option value="important" selected>Important Only</option>
+                                    <option value="critical">Critical Only</option>
+                                    <option value="none">None</option>
+                                </select>
+                                <div class="form-text">Select which notifications you want to receive.</div>
+                            </div>
+                            
+                            <div class="form-action">
+                                <button class="btn btn-secondary">Reset</button>
+                                <button class="btn btn-primary">Save Preferences</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Other settings panels would be here but are hidden initially -->
+                    <div id="appearance-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">Appearance Settings</h3>
+                            <p>UI theme and appearance settings would appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="monitoring-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">Monitoring Settings</h3>
+                            <p>Network monitoring configuration would appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="security-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">Security Settings</h3>
+                            <p>Security configuration options would appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="api-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h3 class="settings-section-title">API Access</h3>
+                            <p>API key management and settings would appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                &copy; 2023 NetMonitor | Smart Network Monitoring System | All Rights Reserved
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Settings saved successfully!</div>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.settings-nav-link').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active tab
+                document.querySelectorAll('.settings-nav-link').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show corresponding panel
+                const targetId = this.getAttribute('data-target');
+                document.querySelectorAll('.settings-panel').forEach(panel => {
+                    panel.style.display = 'none';
+                });
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+        
+        // Save button click handler
+        document.getElementById('save-btn').addEventListener('click', function() {
+            // Show toast notification
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        });
+        
+        // Reset button click handler
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset all settings to default values?')) {
+                // Would reset settings here
+                alert('Settings have been reset to defaults.');
+            }
+        });
+    </script>
+</body>
+</html> 

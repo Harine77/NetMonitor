@@ -50,3 +50,34 @@ th {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Dark Mode Styles */
+body.dark-mode {
+    --background-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+}
+
+body.dark-mode .card {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .card-header {
+    border-bottom: 1px solid #334155;
+}
+
+body.dark-mode .top-bar {
+    border-bottom: 1px solid #334155;
+}
+
+body.dark-mode table th, 
+body.dark-mode table td {
+    border-bottom: 1px solid #334155;
+}
+
+body.dark-mode #theme-toggle i {
+    color: #f59e0b;
+}
