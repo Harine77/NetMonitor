@@ -5,7 +5,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Harine77/NetMonitor.svg)](https://github.com/Harine77/NetMonitor/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Harine77/NetMonitor.svg)](https://github.com/Harine77/NetMonitor/network)
 
-A lightweight, real-time network monitoring system with live dashboards, diagnostic tools, and simulated bandwidth prediction capabilities. Perfect for educational purposes, development environments, and network monitoring demonstrations without requiring system-level privileges or heavy ML dependencies.
+An advanced ML-powered platform that provides real-time traffic monitoring, congestion prediction, and intelligent bandwidth management to optimize your network infrastructure.
 
 ## 📋 Table of Contents
 
