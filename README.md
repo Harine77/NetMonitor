@@ -24,39 +24,30 @@ A lightweight, real-time network monitoring system with live dashboards, diagnos
 - [Contributing](#-contributing)
 - [License](#-license)
 
+## 🎯 Problem Statement
+
+**Bandwidth Management Challenge:** Efficiently allocating and managing bandwidth resources is critical for ensuring optimal network performance and user experience. Traditional bandwidth allocation methods can be inflexible and may not adapt to dynamic traffic demands.
+
 ## 🚀 Features
 
 ### Core Functionality
 - 🔍 **Real-time Packet Simulation** - Simulated network traffic monitoring without requiring root privileges
 - 📊 **Live Dashboard** - Interactive web-based dashboard with real-time analytics
-- 🤖 **Bandwidth Prediction** - Simulated ML-based bandwidth forecasting (lightweight alternative to TensorFlow)
+- 🤖 **LSTM Prediction Model** - Deep learning for bandwidth forecasting
 - 🎯 **Diagnostic Tools** - Built-in network diagnostic utilities and endpoint testing
 - 📈 **Performance Analytics** - Traffic analysis, flow monitoring, and performance metrics
 - 🌙 **Theme Support** - Dark/Light mode switching for better user experience
 
-### Advanced Features
-- ⚡ **Real-time Updates** - Live data streaming with WebSocket-like functionality
-- 🔧 **API Integration** - RESTful API for external tool integration
-- 📱 **Responsive Design** - Mobile-friendly interface
-- 🛡️ **Error Handling** - Robust error management and logging
-- 🔄 **Auto-refresh** - Automatic data refresh capabilities
-
 ## 🛠️ Tech Stack
 
-### Backend
-- **Python 3.6+** - Core programming language
-- **Flask 2.0+** - Web framework for API and web interface
-- **Requests** - HTTP library for external API calls
-- **JSON** - Data interchange format
-- **Threading** - Concurrent processing for real-time features
+**Backend**
+- Python 3.6+ • Flask • TensorFlow/Keras • NumPy • Pandas
 
-### Frontend
-- **HTML5** - Semantic markup
-- **CSS3** - Modern styling with Flexbox/Grid
-- **JavaScript (ES6+)** - Client-side interactivity
-- **Chart.js** - Data visualization and charts
-- **Bootstrap** - Responsive design framework
-- **Font Awesome** - Icon library
+**Machine Learning**
+- LSTM Networks • Time Series Analysis • Real-time Prediction
+
+**Frontend**
+- HTML5 • CSS3 • JavaScript • Chart.js • Bootstrap
 
 ### Development & Deployment
 - **Git** - Version control
@@ -65,36 +56,44 @@ A lightweight, real-time network monitoring system with live dashboards, diagnos
 
 ### Simulation & Testing
 - **Custom Traffic Simulator** - Lightweight packet simulation
-- **Mock ML Models** - Simulated machine learning predictions
+- **ML Models** - Simulated machine learning predictions
 - **Unit Testing** - Automated testing framework
+
+## 🧠 LSTM Algorithm Implementation
+
+Our system uses **Long Short-Term Memory (LSTM)** neural networks for intelligent bandwidth prediction:
+
+### Architecture
+```
+Input Layer (Traffic Data) → LSTM Layers (64 units) → Dense Layer → Output (Bandwidth Prediction)
+```
+
+### Key Features
+- **Time Series Analysis**: Processes historical traffic patterns
+- **Real-time Adaptation**: Continuously learns from new data
+- **Multi-variate Input**: Considers multiple network parameters
+- **Dynamic Scaling**: Adjusts predictions based on current load
+
+### Training Data
+- Historical bandwidth usage patterns
+- Peak/off-peak traffic analysis  
+- Application-specific data consumption
+- User behavior patterns
 
 ## 📺 Demo & Documentation
 
 ### 🎥 Video Demonstration
-[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)](link-to-your-video)
+[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)]  
+
+https://github.com/user-attachments/assets/6fafb628-96ba-4cc4-8490-a6377d0c9337
 
 *Watch our comprehensive demo showcasing all features in action*
 
 ### 📄 Detailed Report
-[![Download Report](https://img.shields.io/badge/Download-PDF%20Report-blue.svg?logo=adobe-acrobat-reader)](link-to-your-pdf)
+[![Download Report](https://img.shields.io/badge/Download-PDF%20Report-blue.svg?logo=adobe-acrobat-reader)][NETWORK PROGRAMMING LAB MINI PROJECT PPT.pptx](https://github.com/user-attachments/files/21333293/NETWORK.PROGRAMMING.LAB.MINI.PROJECT.PPT.pptx)
 
-*Complete technical documentation and analysis report*
 
-## ⚙️ Prerequisites
-
-- **Python 3.6 or higher**
-- **pip** (Python package installer)
-- **Modern web browser** (Chrome, Firefox, Safari, Edge)
-- **4GB RAM** minimum (recommended: 8GB)
-- **50MB** free disk space
-
-### System Requirements
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| Python    | 3.6+    | 3.8+        |
-| RAM       | 2GB     | 4GB         |
-| Storage   | 50MB    | 100MB       |
-| Network   | Any     | Broadband   |
+*project presentation*
 
 ## 📦 Installation
 
@@ -212,15 +211,6 @@ python test_real_time.py
 - ✅ Prediction functionality
 - ✅ Error handling
 
-### Manual Testing Checklist
-- [ ] Dashboard loads correctly
-- [ ] Real-time updates working
-- [ ] All navigation links functional
-- [ ] Theme switching works
-- [ ] API returns valid JSON
-- [ ] Diagnostic tools respond
-- [ ] Mobile responsiveness
-
 ### Performance Testing
 ```bash
 # Load test with multiple requests
@@ -238,196 +228,6 @@ for i in {1..10}; do curl http://localhost:5000/api/packets & done
 | **Simulation not working** | No traffic data | Run `simulate_traffic.py` in separate terminal |
 | **Model training fails** | Prediction errors | Ensure simulation runs for at least 30 seconds |
 
-### Common Solutions
-
-#### Port Already in Use
-```bash
-# Windows
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-
-# macOS/Linux  
-lsof -ti:5000 | xargs kill -9
-```
-
-#### Permission Issues
-```bash
-# Ensure proper file permissions
-chmod +x run_app.py simulate_traffic.py
-```
-
-#### Python Path Issues
-```bash
-# Add current directory to Python path
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-```
-
-## 🔗 API Endpoints
-
-### Core Endpoints
-
-| Method | Endpoint | Description | Response |
-|--------|----------|-------------|----------|
-| GET | `/api/packets` | Fetch current packet data | JSON array of packets |
-| GET | `/api/stats` | Get traffic statistics | JSON stats object |
-| POST | `/api/predict` | Request bandwidth prediction | JSON prediction data |
-| GET | `/api/health` | Server health check | Status message |
-
-### Example API Calls
-
-#### Fetch Packets
-```bash
-curl -X GET http://localhost:5000/api/packets
-```
-
-**Response:**
-```json
-[
-  {
-    "timestamp": "2025-07-20T10:30:45",
-    "source": "192.168.1.100",
-    "destination": "192.168.1.1",
-    "protocol": "TCP",
-    "size": 1024,
-    "port": 80
-  }
-]
-```
-
-#### Get Statistics
-```bash
-curl -X GET http://localhost:5000/api/stats
-```
-
-**Response:**
-```json
-{
-  "total_packets": 1250,
-  "bandwidth_usage": 85.2,
-  "active_connections": 42,
-  "uptime": "2h 15m"
-}
-```
-
-## 📁 Project Structure
-
-```
-NetMonitor/
-├── 📄 README.md                 # Project documentation
-├── 📄 requirements.txt          # Python dependencies
-├── 📄 LICENSE                   # MIT license
-├── 🐍 main_1.py                # Main Flask application
-├── 🐍 run_app.py               # Application launcher
-├── 🐍 simulate_traffic.py      # Traffic simulation script
-├── 🐍 test_real_time.py        # Testing utilities
-├── 📁 templates/               # HTML templates
-│   ├── 🌐 base.html            # Base template
-│   ├── 🏠 home.html            # Home dashboard
-│   ├── 📊 analytics.html       # Analytics page
-│   └── 🔧 diagnostics.html     # Diagnostic tools
-├── 📁 static/                  # Static assets
-│   ├── 🎨 css/
-│   │   └── style.css           # Custom styles
-│   ├── 📱 js/
-│   │   └── app.js              # Client-side logic
-│   └── 🖼️ images/             # Images and icons
-├── 📁 docs/                    # Documentation
-│   ├── 📄 API_Documentation.pdf # API reference
-│   └── 🎥 Demo_Video.mp4       # Feature demonstration
-└── 📁 tests/                   # Test files
-    └── 🧪 test_suite.py        # Unit tests
-```
-
-## 🔄 Comparison: Simplified vs Full Version
-
-| Feature | Simplified Version | Full Version |
-|---------|-------------------|--------------|
-| **Packet Capture** | ✅ Simulated traffic | ⚡ Real Scapy integration |
-| **ML Predictions** | 🤖 Random simulation | 🧠 TensorFlow models |
-| **Dependencies** | 📦 Lightweight (Flask, Requests) | 🏗️ Heavy (TensorFlow, Scapy, etc.) |
-| **System Access** | 👤 User-level permissions | 🔐 Admin/root required |
-| **Setup Time** | ⚡ < 2 minutes | 🕐 10-15 minutes |
-| **Resource Usage** | 💾 ~50MB RAM | 💽 ~500MB+ RAM |
-| **Platform Support** | ✅ Windows, macOS, Linux | ⚠️ Limited by dependencies |
-| **Learning Curve** | 📈 Beginner-friendly | 📊 Advanced users |
-
-## 🎯 Use Cases
-
-### Educational
-- **Network Monitoring Concepts** - Learn monitoring principles without complex setup
-- **Web Development** - Practice Flask, JavaScript, and API development
-- **System Architecture** - Understand real-time systems design
-
-### Development & Testing
-- **Prototype Development** - Test monitoring interfaces rapidly
-- **API Testing** - Validate network monitoring API designs
-- **UI/UX Design** - Experiment with dashboard layouts
-
-### Demonstration
-- **Portfolio Projects** - Showcase full-stack development skills
-- **Technical Presentations** - Demonstrate monitoring concepts
-- **Proof of Concept** - Validate monitoring system ideas
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Development Setup
-```bash
-# Fork and clone your fork
-git clone https://github.com/YOUR_USERNAME/NetMonitor.git
-cd NetMonitor
-
-# Create feature branch
-git checkout -b feature/amazing-feature
-
-# Make changes and commit
-git commit -m "Add amazing feature"
-
-# Push to your fork and create Pull Request
-git push origin feature/amazing-feature
-```
-
-### Contribution Guidelines
-- Follow Python PEP 8 style guidelines
-- Add tests for new features
-- Update documentation
-- Ensure cross-platform compatibility
-
-### Areas for Contribution
-- 🐛 Bug fixes and improvements
-- ✨ New dashboard features
-- 🎨 UI/UX enhancements
-- 📚 Documentation updates
-- 🧪 Additional test coverage
-- 🌐 Internationalization
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 Harine77
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation details...
-```
-
-## 🙏 Acknowledgments
-
-- **Flask Community** - For the excellent web framework
-- **Bootstrap Team** - For responsive design components
-- **Chart.js** - For beautiful data visualizations
-- **Open Source Community** - For inspiration and best practices
-
-## 📞 Support & Contact
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/Harine77/NetMonitor/issues)
-- **Email**: [Contact maintainer](mailto:your-email@example.com)
-- **Documentation**: [Wiki pages](https://github.com/Harine77/NetMonitor/wiki)
-
 ---
 
 <div align="center">
@@ -437,7 +237,7 @@ of this software and associated documentation details...
 [![GitHub stars](https://img.shields.io/github/stars/Harine77/NetMonitor.svg?style=social&label=Star)](https://github.com/Harine77/NetMonitor)
 [![GitHub forks](https://img.shields.io/github/forks/Harine77/NetMonitor.svg?style=social&label=Fork)](https://github.com/Harine77/NetMonitor/fork)
 
-Made with ❤️ by [Harine77](https://github.com/Harine77)
+Made with ❤️ by Govisha R J [Harine77](https://github.com/Harine77) [Harini-1401](https://github.com/Harini-1401)
 
 </div>
 
