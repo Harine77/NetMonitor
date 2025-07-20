@@ -13,16 +13,11 @@ A lightweight, real-time network monitoring system with live dashboards, diagnos
 - [Features](#-features)
 - [Tech Stack](#️-tech-stack)
 - [Demo & Documentation](#-demo--documentation)
-- [Prerequisites](#️-prerequisites)
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [Usage](#-usage)
 - [Testing](#-testing)
 - [Troubleshooting](#-troubleshooting)
-- [API Endpoints](#-api-endpoints)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
-- [License](#-license)
 
 ## 🎯 Problem Statement
 
@@ -83,9 +78,7 @@ Input Layer (Traffic Data) → LSTM Layers (64 units) → Dense Layer → Output
 ## 📺 Demo & Documentation
 
 ### 🎥 Video Demonstration
-[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)]  
-
-https://github.com/user-attachments/assets/6fafb628-96ba-4cc4-8490-a6377d0c9337
+[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)]https://github.com/user-attachments/assets/6fafb628-96ba-4cc4-8490-a6377d0c9337
 
 *Watch our comprehensive demo showcasing all features in action*
 
