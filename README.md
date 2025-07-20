@@ -2,7 +2,6 @@
 
 [![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Harine77/NetMonitor.svg)](https://github.com/Harine77/NetMonitor/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Harine77/NetMonitor.svg)](https://github.com/Harine77/NetMonitor/network)
 
