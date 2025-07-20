@@ -78,15 +78,13 @@ Input Layer (Traffic Data) → LSTM Layers (64 units) → Dense Layer → Output
 ## 📺 Demo & Documentation
 
 ### 🎥 Video Demonstration
-[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)]https://github.com/user-attachments/assets/6fafb628-96ba-4cc4-8490-a6377d0c9337
-
+[![NetMonitor Demo](https://img.shields.io/badge/Watch-Demo%20Video-red.svg?logo=youtube)](https://github.com/user-attachments/assets/6fafb628-96ba-4cc4-8490-a6377d0c9337)
 *Watch our comprehensive demo showcasing all features in action*
 
 ### 📄 Detailed Report
-[![Download Report](https://img.shields.io/badge/Download-PDF%20Report-blue.svg?logo=adobe-acrobat-reader)][NETWORK PROGRAMMING LAB MINI PROJECT PPT.pptx](https://github.com/user-attachments/files/21333293/NETWORK.PROGRAMMING.LAB.MINI.PROJECT.PPT.pptx)
+[![Download Report](https://img.shields.io/badge/Download-PDF%20Report-blue.svg?logo=adobe-acrobat-reader)](https://github.com/user-attachments/files/21333293/NETWORK.PROGRAMMING.LAB.MINI.PROJECT.PPT.pptx)
+📄 [NETWORK PROGRAMMING LAB MINI PROJECT PPT.pptx](https://github.com/user-attachments/files/21333293/NETWORK.PROGRAMMING.LAB.MINI.PROJECT.PPT.pptx)
 
-
-*project presentation*
 
 ## 📦 Installation
 
