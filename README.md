@@ -230,7 +230,7 @@ for i in {1..10}; do curl http://localhost:5000/api/packets & done
 [![GitHub stars](https://img.shields.io/github/stars/Harine77/NetMonitor.svg?style=social&label=Star)](https://github.com/Harine77/NetMonitor)
 [![GitHub forks](https://img.shields.io/github/forks/Harine77/NetMonitor.svg?style=social&label=Fork)](https://github.com/Harine77/NetMonitor/fork)
 
-Made with ❤️ by Govisha R J [Harine77](https://github.com/Harine77) [Harini-1401](https://github.com/Harini-1401)
+Made with ❤️ by [Govisha R J](https://github.com/Govisharj) [Harine77](https://github.com/Harine77) [Harini-1401](https://github.com/Harini-1401)
 
 </div>
 
